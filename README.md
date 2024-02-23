@@ -11,6 +11,9 @@ Project repository for the infovis project at VUB 2024.
 1. Restore the dependencies
 
     ```pip install -r requirements.txt```
+    
+1. Copy `.env.template` to `.env` and configure the required secrets (e.g. port, password, ...)
+
 
 ## Running the dashboard
 1. Run the dash app in `src/app.py` from your IDEA of choice
