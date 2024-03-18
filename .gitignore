@@ -199,8 +199,3 @@ pip-selfcheck.json
 .history
 .ionide
 
-# Excel data
-*.xlsx
-*.xlsb
-*.xls
-*.csv
