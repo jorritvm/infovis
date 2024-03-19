@@ -4,6 +4,7 @@ Project repository for the infovis project at VUB 2024.
 
 ## Setting up your local copy
 1. Clone the repo
+1. Make sure you're using python 3.11
 1. Set up a virtual environment
 
     ```python -m venv venv```
@@ -15,9 +16,14 @@ Project repository for the infovis project at VUB 2024.
 1. Copy `.env.template` to `.env` and configure the required secrets (e.g. port, password, ...)
 
 
+## Running the notebook
+1. Get the jupyter extension for vs code
+1. Install the dependencies in `etl/requirements.txt`
+1. Run the notebook from vs code using the ipython kernel.
+
 ## Running the dashboard
-1. Run the dash app in `src/app.py` from your IDEA of choice
-1. Browse to the browser.
+1. Run the dash app in `app/app.py` from your IDEA of choice
+2. Browse to the browser.
 
 ## Contribute
 1. Read the documentation in the `doc/` folder
@@ -34,5 +40,5 @@ Project repository for the infovis project at VUB 2024.
 ## Author & contributors
 * Jorrit Vander Mynsbrugge
 * Ruth Vandeputte
-* Mishkat 
+* Mishkat Chowdhury
 
