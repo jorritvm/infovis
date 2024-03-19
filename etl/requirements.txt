@@ -1,0 +1,7 @@
+pandas
+openpyxl
+plotly
+ipykernel
+nbformat
+pyarrow
+fastparquet
