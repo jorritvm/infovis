@@ -40,17 +40,17 @@ for continent in continents:
 
 # create the filters
 sub_region_filter = dcc.Dropdown(
-    id='sub_region_filter_dropdown',
+    id='sub_region_filter',
     options=[]
 )
 country_filter = dcc.Dropdown(
-    id='country_filter_dropdown',
+    id='country_filter',
     options=[]
 )
 unique_status = list(df["Status"].unique())
 unique_status.sort()
 status_filter = dcc.Dropdown(
-    id='status_dropdown',
+    id='status_filter',
     options=unique_status,
     multi=True,
 )
@@ -109,7 +109,7 @@ app.layout = dbc.Container([
 # callbacks
 @app.callback(
     [Output(f"{continent}_capacity", 'children') for continent in continents],
-    Input('status_dropdown', 'value')
+    Input('status_filter', 'value')
 )
 def update_capacities_on_cards(status):
     # filter by status
@@ -133,7 +133,7 @@ def update_capacities_on_cards(status):
     return output_capacities
 
 @app.callback(
-    Output("sub_region_filter_dropdown", 'options'),
+    Output("sub_region_filter", 'options'),
     [Input(f"{continent}_click", 'n_clicks') for continent in continents]
 )
 def update_subregion_filter(*button_clicks):
@@ -149,6 +149,16 @@ def update_subregion_filter(*button_clicks):
 
     return options
 
+@app.callback(
+    Output("country_filter", "options"),
+    Input("sub_region_filter", "value")
+)
+def update_country_filter(sub_region):
+    if sub_region == "" or sub_region is None:
+        return []
+    else:
+        countries = agg[agg["Subregion"] == sub_region]["Country"].unique()
+        return countries
 
 
 if __name__ == "__main__":
