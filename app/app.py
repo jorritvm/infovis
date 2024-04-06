@@ -1,7 +1,6 @@
 """
 This is the main file for the dash app
 """
-
 import os
 from dotenv import load_dotenv
 
@@ -11,14 +10,47 @@ from dash import dcc, html, Input, Output
 import dash_leaflet as dl
 import dash_leaflet.express as dlx
 import dash_bootstrap_components as dbc
-from dash_extensions.javascript import assign, Namespace
 import plotly.express as px
 
-# load data
-df = pd.read_parquet("../data/clean/gwpt.parquet")
-agg = pd.read_parquet("../data/clean/gwpt_agg.parquet")
-geo = pd.read_parquet("../data/clean/geo.parquet")
+#############################
+# data transformations
+#############################
+dfd = pd.read_parquet("../data/clean/gwpt.parquet")  # full details
+agg = pd.read_parquet("../data/clean/gwpt_agg.parquet")  # aggregated only
+geo = pd.read_parquet("../data/clean/geo.parquet")  # geo info only
 
+
+def filter_df(dfi, region=None, sub_region=None, country=None, status=None, time_range=None):
+    dfo = dfi.copy()
+
+    # filter by region
+    if region is not None:
+        if region != "Total":
+            dfo = dfo[(dfo["Region"] == region)]
+
+    # filter by sub_region
+    if sub_region is not None:
+        dfo = dfo[(dfo["Subregion"] == sub_region)]
+
+    # filter by country
+    if country is not None:
+        dfo = dfo[(dfo["Country"] == country)]
+
+    # filter by status
+    if status is not None and status != []:
+        dfo = dfo[dfo["Status"].isin(status)]
+
+    # filter by time range
+    if time_range is not None:
+        start_year, end_year = time_range
+        dfo = dfo[(dfo["Start year"] >= start_year) & (dfo["Start year"] <= end_year)]
+
+    return dfo
+
+
+#############################
+# APP definition
+#############################
 # create the app
 app = dash.Dash(
     __name__,
@@ -49,15 +81,15 @@ country_filter = dcc.Dropdown(
     id='country_filter',
     options=[]
 )
-unique_status = list(df["Status"].unique())
+unique_status = list(dfd["Status"].unique())
 unique_status.sort()
 status_filter = dcc.Dropdown(
     id='status_filter',
     options=unique_status,
     multi=True,
 )
-y_min = min(df["Start year"].min(), df["Retired year"].min())
-y_max = max(df["Start year"].max(), df["Retired year"].max())
+y_min = min(dfd["Start year"].min(), dfd["Retired year"].min())
+y_max = max(dfd["Start year"].max(), dfd["Retired year"].max())
 time_slider = dcc.RangeSlider(
     id='time_slider',
     min=y_min,
@@ -66,16 +98,6 @@ time_slider = dcc.RangeSlider(
     marks={i: str(i) for i in range(y_min, y_max+1) if i % 10 == 0},
     value=[y_min, y_max]  # Default value
 )
-
-# create the main map
-main_map = html.Div("main map content",
-                    id="main_map",
-                    style={'background-color': 'green'})
-
-# create the bar chart
-bar_chart = html.Div("bar chart content",
-                     id="bar_chart",
-                     style={})
 
 # create the app's layout
 app.layout = dbc.Container([
@@ -97,11 +119,19 @@ app.layout = dbc.Container([
                 style={'height': '5vh'}),
             dbc.Row([
                 dbc.Col(  # map column
-                    dbc.Row(main_map, style={'height': '85vh'}),
+                    dbc.Row(
+                        html.Div("main map content",
+                                 id="main_map",
+                                 style={}),
+                        style={'height': '85vh'}),
                     style={'height': '85vh'},
                     width=9),
                 dbc.Col(  # barchart column
-                    dbc.Row(bar_chart, style={'height': '85vh'}),
+                    dbc.Row(
+                        html.Div("bar chart content",
+                                 id="bar_chart",
+                                 style={}),
+                        style={'height': '85vh'}),
                     style={'height': '85vh'},
                     width=3),
                 ],
@@ -111,31 +141,25 @@ app.layout = dbc.Container([
     ], fluid=True
 )
 
-
+##################
 # callbacks
+##################
 @app.callback(
     [Output(f"{continent}_capacity", 'children') for continent in continents],
     [Input('status_filter', 'value'),
      Input('time_slider', 'value')]
 )
 def update_capacities_on_cards(status, time_range):
-    # filter by status
-    tmp = agg.copy()
-    if status is not None and status != []:
-        tmp = agg[agg["Status"].isin(status)]
-
-    # filter by time range
-    if time_range is not None:
-        start_year, end_year = time_range
-        tmp = tmp[(tmp["Start year"] >= start_year) & (tmp["Start year"] <= end_year)]
+    # Filter DataFrame based on status and time range
+    dff = filter_df(agg, status=status, time_range=time_range)
 
     # make output values for every continent
     output_capacities = []
     for continent in continents:
         if continent == "Total":
-            capa = tmp["Capacity (MW)"].sum()
+            capa = dff["Capacity (MW)"].sum()
         else:
-            capa = tmp[tmp["Region"] == continent]["Capacity (MW)"].sum()
+            capa = dff[dff["Region"] == continent]["Capacity (MW)"].sum()
         output_capacities = output_capacities + [capa]
 
     # format output
@@ -176,24 +200,21 @@ def update_country_filter(sub_region):
 
 @app.callback(
     Output('main_map', 'children'),
-    [Input('status_filter', 'value'),
+    [Input('sub_region_filter', 'value'),
+     Input('country_filter', 'value'),
+     Input('status_filter', 'value'),
      Input('time_slider', 'value')]
 )
-def update_map(status, time_range):
+def update_map(sub_region, country, status, time_range):
     # Filter DataFrame based on status and time range
-    filtered_df = df.copy()
-    if status is not None and status != []:
-        filtered_df = filtered_df[filtered_df["Status"].isin(status)]
-    if time_range is not None:
-        start_year, end_year = time_range
-        filtered_df = filtered_df[(filtered_df["Start year"] >= start_year) & (filtered_df["Start year"] <= end_year)]
+    dff = filter_df(dfd, sub_region=sub_region, country=country, status=status, time_range=time_range)
 
     # debug it is way too slow so we just limit ourselves to 100 circles
-    filtered_df = filtered_df.nlargest(100, "Capacity (MW)")
+    dff = dff.nlargest(100, "Capacity (MW)")
 
     # Create a list of dl.Marker objects for each wind farm
     markers = []
-    for i, row in filtered_df.iterrows():
+    for i, row in dff.iterrows():
         marker = dict(lat= row['Latitude'],
                  lon= row['Longitude'],
                  value=row['Capacity (MW)'])
@@ -213,20 +234,17 @@ def update_map(status, time_range):
 
 @app.callback(
     Output('bar_chart', 'children'),
-    [Input('status_filter', 'value'),
+    [Input('sub_region_filter', 'value'),
+     Input('country_filter', 'value'),
+     Input('status_filter', 'value'),
      Input('time_slider', 'value')]
 )
-def update_bar_chart(status, time_range):
+def update_bar_chart(sub_region, country, status, time_range):
     # Filter DataFrame based on status and time range
-    filtered_df = df.copy()
-    if status is not None and status != []:
-        filtered_df = filtered_df[filtered_df["Status"].isin(status)]
-    if time_range is not None:
-        start_year, end_year = time_range
-        filtered_df = filtered_df[(filtered_df["Start year"] >= start_year) & (filtered_df["Start year"] <= end_year)]
+    dff = filter_df(dfd, sub_region=sub_region, country=country, status=status, time_range=time_range)
 
     # Sort DataFrame by capacity in descending order and select top 20 wind farms
-    top_20 = filtered_df.nlargest(20, "Capacity (MW)")
+    top_20 = dff.nlargest(20, "Capacity (MW)")
     top_20 = top_20[::-1]
 
     # Create horizontal bar chart
