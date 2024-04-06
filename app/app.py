@@ -9,7 +9,9 @@ import pandas as pd
 import dash
 from dash import dcc, html, Input, Output
 import dash_leaflet as dl
+import dash_leaflet.express as dlx
 import dash_bootstrap_components as dbc
+from dash_extensions.javascript import assign, Namespace
 import plotly.express as px
 
 # load data
@@ -171,6 +173,43 @@ def update_country_filter(sub_region):
         countries = agg[agg["Subregion"] == sub_region]["Country"].unique()
         return countries
 
+
+@app.callback(
+    Output('main_map', 'children'),
+    [Input('status_filter', 'value'),
+     Input('time_slider', 'value')]
+)
+def update_map(status, time_range):
+    # Filter DataFrame based on status and time range
+    filtered_df = df.copy()
+    if status is not None and status != []:
+        filtered_df = filtered_df[filtered_df["Status"].isin(status)]
+    if time_range is not None:
+        start_year, end_year = time_range
+        filtered_df = filtered_df[(filtered_df["Start year"] >= start_year) & (filtered_df["Start year"] <= end_year)]
+
+    # debug it is way too slow so we just limit ourselves to 100 circles
+    filtered_df = filtered_df.nlargest(100, "Capacity (MW)")
+
+    # Create a list of dl.Marker objects for each wind farm
+    markers = []
+    for i, row in filtered_df.iterrows():
+        marker = dict(lat= row['Latitude'],
+                 lon= row['Longitude'],
+                 value=row['Capacity (MW)'])
+        markers = markers + [marker]
+    geojson = dlx.dicts_to_geojson(markers)
+    print(geojson)
+
+    # Putting the map in our app layout
+    my_map = dl.Map([dl.TileLayer(),
+                dl.GeoJSON(data=geojson, id="geojson", zoomToBounds=True)],
+               style={'width': '100%', 'height': '100%'})
+
+    # debug, none of the above works, so just show a basemap for now:
+    my_map = dl.Map(dl.TileLayer(), center=[56,10], zoom=6, style={'width': '100%', 'height': '100%'})
+
+    return my_map
 
 @app.callback(
     Output('bar_chart', 'children'),
