@@ -24,21 +24,19 @@ app = dash.Dash(
 )
 
 # create the cards
-card_ids = ["total_capacity"]
-card_total = dbc.Card(
-    dbc.CardBody([html.H4("Total Capacity", className="card-title"),
-                  html.H6("", className="card-subtitle", id="total_capacity")]),
-    style={"width": "18rem"}
-)
-card_continent = dict()
-for continent in geo["Region"].unique():
-    card_continent[continent] = dbc.Card(
-        dbc.CardBody([html.H5(f"{continent} Capacity", className="card-title"),
-                      html.H6("", className="card-subtitle", id=f"{continent}_capacity")]),
-        style={"width": "18rem"}
-    )
-    card_ids = card_ids + [f"{continent}_capacity"]
-all_cards = [card_total] + list(card_continent.values())
+continents = ["Total"] + list(geo["Region"].unique())
+continents_dbc = []
+for continent in continents:
+    # to make it clickable I wrap the dbc card in an html div
+    continent_dbc = dbc.Button([
+                html.H4(f"{continent} Capacity", className="card-title"),
+                html.H6("", className="card-subtitle", id=f"{continent}_capacity")
+            ],
+            id=f"{continent}_click",
+            outline=False,
+            color="secondary",
+            size="lg")
+    continents_dbc = continents_dbc + [continent_dbc]
 
 # create the filters
 sub_region_filter = dcc.Dropdown(
@@ -68,7 +66,7 @@ time_slider = dcc.RangeSlider(
 )
 
 # create the main map
-main_map = html.Div("main map content", style={'background-color': 'green'})
+main_map = html.Div("main map content", id="temp", style={'background-color': 'green'})
 
 # create the bar chart
 bar_chart = html.Div("bar chart content", style={'background-color': 'red'})
@@ -80,7 +78,7 @@ app.layout = dbc.Container([
                      style={'height': '25px'})]),
     dbc.Row([
         dbc.Col( # sidebar column
-            [dbc.Row(x, style={'height': '15vh'}) for x in all_cards],
+            [dbc.Row(x, style={'height': '15vh'}) for x in continents_dbc],
             style={'background-color': 'lightblue', 'height': '100vh'},
             width=2),
         dbc.Col([
@@ -110,7 +108,7 @@ app.layout = dbc.Container([
 
 # callbacks
 @app.callback(
-    [Output(card_id, 'children') for card_id in card_ids],
+    [Output(f"{continent}_capacity", 'children') for continent in continents],
     Input('status_dropdown', 'value')
 )
 def update_capacities_on_cards(status):
@@ -121,9 +119,8 @@ def update_capacities_on_cards(status):
 
     # make output values for every continent
     output_capacities = []
-    for card_id in card_ids:
-        continent = card_id.replace("_capacity", "")
-        if continent == "total":
+    for continent in continents:
+        if continent == "Total":
             capa = tmp["Capacity (MW)"].sum()
         else:
             capa = tmp[tmp["Region"] == continent]["Capacity (MW)"].sum()
@@ -134,6 +131,24 @@ def update_capacities_on_cards(status):
     output_capacities = [f"{x:,}" for x in output_capacities]  # put thousand sep ,
     output_capacities = [x.replace(",",".") for x in output_capacities]  # put thousand sep .
     return output_capacities
+
+@app.callback(
+    Output("sub_region_filter_dropdown", 'options'),
+    [Input(f"{continent}_click", 'n_clicks') for continent in continents]
+)
+def update_subregion_filter(*button_clicks):
+    ctx = dash.callback_context
+    if not ctx.triggered:
+        button_id = None
+    else:
+        button_id = ctx.triggered[0]['prop_id'].split('.')[0]
+        continent = button_id.replace("_click", "")
+        options = []
+        if continent != "Total":
+            options = agg[agg["Region"] == continent]["Subregion"].unique()
+
+    return options
+
 
 
 if __name__ == "__main__":
