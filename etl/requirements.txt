@@ -5,3 +5,5 @@ ipykernel
 nbformat
 pyarrow
 fastparquet
+dash-leaflet
+dash-extensions
