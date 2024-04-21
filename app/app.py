@@ -188,26 +188,16 @@ def update_map(status, time_range):
         start_year, end_year = time_range
         filtered_df = filtered_df[(filtered_df["Start year"] >= start_year) & (filtered_df["Start year"] <= end_year)]
 
-    # debug it is way too slow so we just limit ourselves to 100 circles
-    filtered_df = filtered_df.nlargest(100, "Capacity (MW)")
+    # debug it is way too slow so we just limit ourselves to 1000 circles
+    filtered_df = filtered_df.nlargest(1000, "Capacity (MW)")
 
-    # Create a list of dl.Marker objects for each wind farm
-    markers = []
-    for i, row in filtered_df.iterrows():
-        marker = dict(lat= row['Latitude'],
-                 lon= row['Longitude'],
-                 value=row['Capacity (MW)'])
-        markers = markers + [marker]
-    geojson = dlx.dicts_to_geojson(markers)
-    print(geojson)
+    # Create a list of dl.CircleMarker objects for each wind farm
+    markers = [dl.CircleMarker(center=[row['Latitude'], row['Longitude']], radius=row['Capacity (MW)']/500, children=[
+        dl.Tooltip(row['Project Name'])
+    ]) for i, row in filtered_df.iterrows()]
 
-    # Putting the map in our app layout
-    my_map = dl.Map([dl.TileLayer(),
-                dl.GeoJSON(data=geojson, id="geojson", zoomToBounds=True)],
-               style={'width': '100%', 'height': '100%'})
-
-    # debug, none of the above works, so just show a basemap for now:
-    my_map = dl.Map(dl.TileLayer(), center=[56,10], zoom=6, style={'width': '100%', 'height': '100%'})
+    # Create the map with the markers
+    my_map = dl.Map(children=[dl.TileLayer()] + markers, center=[56,10], zoom=3, style={'width': '100%', 'height': '100%'})
 
     return my_map
 
