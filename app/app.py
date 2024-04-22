@@ -173,15 +173,23 @@ def update_country_filter(sub_region):
         countries = agg[agg["Subregion"] == sub_region]["Country"].unique()
         return countries
 
-
 @app.callback(
     Output('main_map', 'children'),
     [Input('status_filter', 'value'),
-     Input('time_slider', 'value')]
+     Input('time_slider', 'value')] + [Input(f"{continent}_click", 'n_clicks') for continent in continents]
 )
-def update_map(status, time_range):
+def update_map(status, time_range, *continent_clicks):
     # Filter DataFrame based on status and time range
     filtered_df = df.copy()
+
+    # Determine the clicked continent
+    ctx = dash.callback_context
+    if ctx.triggered:
+        button_id = ctx.triggered[0]['prop_id'].split('.')[0]
+        clicked_continent = button_id.replace("_click", "")
+        if clicked_continent != "Total":
+            filtered_df = filtered_df[filtered_df["Region"] == clicked_continent]
+
     if status is not None and status != []:
         filtered_df = filtered_df[filtered_df["Status"].isin(status)]
     if time_range is not None:
@@ -204,11 +212,20 @@ def update_map(status, time_range):
 @app.callback(
     Output('bar_chart', 'children'),
     [Input('status_filter', 'value'),
-     Input('time_slider', 'value')]
+     Input('time_slider', 'value')] + [Input(f"{continent}_click", 'n_clicks') for continent in continents]
 )
-def update_bar_chart(status, time_range):
+def update_bar_chart(status, time_range, *continent_clicks):
     # Filter DataFrame based on status and time range
     filtered_df = df.copy()
+
+    # Determine the clicked continent
+    ctx = dash.callback_context
+    if ctx.triggered:
+        button_id = ctx.triggered[0]['prop_id'].split('.')[0]
+        clicked_continent = button_id.replace("_click", "")
+        if clicked_continent != "Total":
+            filtered_df = filtered_df[filtered_df["Region"] == clicked_continent]
+
     if status is not None and status != []:
         filtered_df = filtered_df[filtered_df["Status"].isin(status)]
     if time_range is not None:
