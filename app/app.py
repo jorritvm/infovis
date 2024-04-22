@@ -252,19 +252,16 @@ def update_map(status, time_range, clicked_continent):
 @app.callback(
     Output('bar_chart', 'children'),
     [Input('status_filter', 'value'),
-     Input('time_slider', 'value')] + [Input(f"{continent}_click", 'n_clicks') for continent in continents]
+     Input('time_slider', 'value'),
+     Input('last_clicked_continent', 'data')]
 )
-def update_bar_chart(status, time_range, *continent_clicks):
+def update_bar_chart(status, time_range, clicked_continent):
     # Filter DataFrame based on status and time range
     filtered_df = df.copy()
 
-    # Determine the clicked continent
-    ctx = dash.callback_context
-    if ctx.triggered:
-        button_id = ctx.triggered[0]['prop_id'].split('.')[0]
-        clicked_continent = button_id.replace("_click", "")
-        if clicked_continent != "Total":
-            filtered_df = filtered_df[filtered_df["Region"] == clicked_continent]
+    # Filter by clicked continent
+    if clicked_continent != "Total":
+        filtered_df = filtered_df[filtered_df["Region"] == clicked_continent]
 
     if status is not None and status != []:
         filtered_df = filtered_df[filtered_df["Status"].isin(status)]
@@ -284,7 +281,6 @@ def update_bar_chart(status, time_range, *continent_clicks):
     graph = dcc.Graph(figure=fig, style={'width': '100%', 'height': '100%'})
 
     return graph
-
 
 if __name__ == "__main__":
     load_dotenv()
