@@ -79,6 +79,7 @@ bar_chart = html.Div("bar chart content",
 
 # create the app's layout
 app.layout = dbc.Container([
+    dcc.Store(id='last_clicked_continent', data='Total'),  # Add this line here
     dbc.Row([html.H1("Global wind power tracker analysis",
                      className='text-center mb-4',
                      style={'height': '45px'})]),
@@ -174,22 +175,49 @@ def update_country_filter(sub_region):
         return countries
 
 @app.callback(
-    Output('main_map', 'children'),
-    [Input('status_filter', 'value'),
-     Input('time_slider', 'value')] + [Input(f"{continent}_click", 'n_clicks') for continent in continents]
+    Output('last_clicked_continent', 'data'),
+    [Input(f"{continent}_click", 'n_clicks') for continent in continents]
 )
-def update_map(status, time_range, *continent_clicks):
-    # Filter DataFrame based on status and time range
-    filtered_df = df.copy()
+def update_clicked_continent(*continent_clicks):
+    """
+    Update the data for the last clicked continent.
 
-    # Determine the clicked continent
+    Parameters:
+    *continent_clicks: Variable number of input arguments representing the number of clicks for each continent.
+
+    Returns:
+    The name of the last clicked continent if a button was clicked, otherwise returns "Total".
+    """
     ctx = dash.callback_context
     if ctx.triggered:
         button_id = ctx.triggered[0]['prop_id'].split('.')[0]
         clicked_continent = button_id.replace("_click", "")
-        if clicked_continent != "Total":
-            filtered_df = filtered_df[filtered_df["Region"] == clicked_continent]
+        return clicked_continent
+    return "Total"
 
+@app.callback(
+    Output('main_map', 'children'),
+    [Input('status_filter', 'value'),
+     Input('time_slider', 'value'),
+     Input('last_clicked_continent', 'data')]
+)
+def update_map(status, time_range, clicked_continent):
+    """
+    Update the map based on the selected status, time range, and clicked continent.
+
+    Parameters:
+    status (list): List of selected statuses.
+    time_range (tuple): Start and end year of the selected time range.
+    clicked_continent (str): Continent that was last clicked.
+
+    Returns:
+    dl.Map: Updated map with markers representing wind farms.
+    """
+    # Filter DataFrame based on status and time range
+    filtered_df = df.copy()
+
+    if clicked_continent != "Total":
+        filtered_df = filtered_df[filtered_df["Region"] == clicked_continent]
     if status is not None and status != []:
         filtered_df = filtered_df[filtered_df["Status"].isin(status)]
     if time_range is not None:
@@ -199,8 +227,20 @@ def update_map(status, time_range, *continent_clicks):
     # debug it is way too slow so we just limit ourselves to 1000 circles
     filtered_df = filtered_df.nlargest(1000, "Capacity (MW)")
 
+    # Create a color mapping for the statuses
+    color_mapping = {
+        'construction': 'pink',
+        'operating': 'blue',
+        'announced': 'magenta',
+        'mothballed': 'white',
+        'cancelled': 'black',
+        'pre-construction': 'green',
+        'retired': 'grey',
+        'shelved': 'orange'
+    }
+
     # Create a list of dl.CircleMarker objects for each wind farm
-    markers = [dl.CircleMarker(center=[row['Latitude'], row['Longitude']], radius=row['Capacity (MW)']/500, children=[
+    markers = [dl.CircleMarker(center=[row['Latitude'], row['Longitude']], radius=row['Capacity (MW)']/500, color=color_mapping.get(row['Status'], 'black'), children=[
         dl.Tooltip(row['Project Name'])
     ]) for i, row in filtered_df.iterrows()]
 
