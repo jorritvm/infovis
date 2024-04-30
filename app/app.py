@@ -98,7 +98,7 @@ app.layout = dbc.Container([
                 style={'height': '5vh'}),
             dbc.Row([
                 dbc.Col(  # map column
-                    dbc.Row(main_map, style={'height': '85vh'}),
+                    dbc.Row(dcc.Graph(id='main_map'), style={'height': '85vh'}),
                     style={'height': '85vh'},
                     width=9),
                 dbc.Col(  # barchart column
@@ -196,7 +196,7 @@ def update_clicked_continent(*continent_clicks):
     return "Total"
 
 @app.callback(
-    Output('main_map', 'children'),
+    Output('main_map', 'figure'),
     [Input('status_filter', 'value'),
      Input('time_slider', 'value'),
      Input('last_clicked_continent', 'data')]
@@ -225,29 +225,39 @@ def update_map(status, time_range, clicked_continent):
         filtered_df = filtered_df[(filtered_df["Start year"] >= start_year) & (filtered_df["Start year"] <= end_year)]
 
     # debug it is way too slow so we just limit ourselves to 1000 circles
-    filtered_df = filtered_df.nlargest(1000, "Capacity (MW)")
+    #filtered_df = filtered_df.nlargest(1000, "Capacity (MW)")
 
-    # Create a color mapping for the statuses
+    # Create a color mapping for the statuses (test based on https://colorbrewer2.org/#type=diverging&scheme=BrBG&n=6)
     color_mapping = {
-        'construction': 'pink',
-        'operating': 'blue',
-        'announced': 'magenta',
-        'mothballed': 'white',
+        'construction': '#5ab4ac',
+        'operating': '#01665e',
+        'announced': '#d8b365',
+        'mothballed': 'lightgrey',
         'cancelled': 'black',
-        'pre-construction': 'green',
-        'retired': 'grey',
-        'shelved': 'orange'
+        'pre-construction': '#c7eae5',
+        'retired': '#666666',
+        'shelved': '#d95f02'
     }
 
-    # Create a list of dl.CircleMarker objects for each wind farm
-    markers = [dl.CircleMarker(center=[row['Latitude'], row['Longitude']], radius=row['Capacity (MW)']/500, color=color_mapping.get(row['Status'], 'black'), children=[
-        dl.Tooltip(row['Project Name'])
-    ]) for i, row in filtered_df.iterrows()]
+    fig = px.scatter_mapbox(filtered_df,
+                            lat="Latitude",
+                            lon="Longitude",
+                            size="Capacity (MW)",
+                            hover_data=["Capacity (MW)", "Installation Type"],
+                            color="Status",
+                            color_discrete_map=color_mapping,
+                            zoom=2
+                            )
 
-    # Create the map with the markers
-    my_map = dl.Map(children=[dl.TileLayer()] + markers, center=[56,10], zoom=3, style={'width': '100%', 'height': '100%'})
+    # style=: Allowed values which do not require a Mapbox API token are 'open-street-map', 'white-bg', 'carto-positron',
+    # 'carto-darkmatter', 'stamen-terrain', 'stamen-toner', 'stamen-watercolor' -> none of them works with cluster
+    # therefore choose between: Allowed values which do require a Mapbox API token are 'basic', 'streets', 'outdoors',
+    # 'light', 'dark', 'satellite', 'satellite- streets' -> 'light' or 'dark' shows colours of markers best
+    fig.update_layout(mapbox_style="carto-positron")
+    fig.update_layout(margin={"r": 0, "t": 0, "l": 0, "b": 0})
+    fig.update_traces(marker_sizemin=3)
 
-    return my_map
+    return fig
 
 @app.callback(
     Output('bar_chart', 'children'),
