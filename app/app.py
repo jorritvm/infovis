@@ -7,12 +7,10 @@ from dotenv import load_dotenv
 
 import pandas as pd
 import dash
-from dash import dcc, html, Input, Output
-import dash_leaflet as dl
-import dash_leaflet.express as dlx
+from dash import dcc, html, Input, Output, State
 import dash_bootstrap_components as dbc
-from dash_extensions.javascript import assign, Namespace
 import plotly.express as px
+import numpy as np
 
 # load data
 df = pd.read_parquet("../data/clean/gwpt.parquet")
@@ -31,13 +29,13 @@ continents_dbc = []
 for continent in continents:
     # to make it clickable I wrap the dbc card in an html div
     continent_dbc = dbc.Button([
-                html.H4(f"{continent} Capacity", className="card-title"),
-                html.H6("", className="card-subtitle", id=f"{continent}_capacity")
-            ],
-            id=f"{continent}_click",
-            outline=False,
-            color="secondary",
-            size="lg")
+        html.H4(f"{continent} Capacity", className="card-title"),
+        html.H6("", className="card-subtitle", id=f"{continent}_capacity")
+    ],
+        id=f"{continent}_click",
+        outline=False,
+        color="secondary",
+        size="lg")
     continents_dbc = continents_dbc + [continent_dbc]
 
 # create the filters
@@ -63,7 +61,7 @@ time_slider = dcc.RangeSlider(
     min=y_min,
     max=y_max,
     step=1,
-    marks={i: str(i) for i in range(y_min, y_max+1) if i % 10 == 0},
+    marks={i: str(i) for i in range(y_min, y_max + 1) if i % 10 == 0},
     value=[y_min, y_max]  # Default value
 )
 
@@ -80,6 +78,7 @@ bar_chart = html.Div("bar chart content",
 # create the app's layout
 app.layout = dbc.Container([
     dcc.Store(id='last_clicked_continent', data='Total'),  # Add this line here
+   # dcc.Store(id='zoom_info'),
     dbc.Row([html.H1("Global wind power tracker analysis",
                      className='text-center mb-4',
                      style={'height': '45px'})]),
@@ -94,7 +93,7 @@ app.layout = dbc.Container([
                 dbc.Col(country_filter, width=2),
                 dbc.Col(status_filter, width=2),
                 dbc.Col(time_slider, width=6)
-                ],
+            ],
                 style={'height': '5vh'}),
             dbc.Row([
                 dbc.Col(  # map column
@@ -105,11 +104,11 @@ app.layout = dbc.Container([
                     dbc.Row(bar_chart, style={'height': '85vh'}),
                     style={'height': '85vh'},
                     width=3),
-                ],
+            ],
                 style={'height': '85vh'}),
-            ], width=10)
-        ]),
-    ], fluid=True
+        ], width=10)
+    ]),
+], fluid=True
 )
 
 
@@ -142,7 +141,7 @@ def update_capacities_on_cards(status, time_range):
     # format output
     output_capacities = [round(x) for x in output_capacities]  # round
     output_capacities = [f"{x:,}" for x in output_capacities]  # put thousand sep ,
-    output_capacities = [x.replace(",",".") for x in output_capacities]  # put thousand sep .
+    output_capacities = [x.replace(",", ".") for x in output_capacities]  # put thousand sep .
     output_capacities = [f"{x} MW" for x in output_capacities]  # adding the SI unit .
     return output_capacities
 
@@ -174,6 +173,7 @@ def update_country_filter(sub_region):
         countries = agg[agg["Subregion"] == sub_region]["Country"].unique()
         return countries
 
+
 @app.callback(
     Output('last_clicked_continent', 'data'),
     [Input(f"{continent}_click", 'n_clicks') for continent in continents]
@@ -195,13 +195,15 @@ def update_clicked_continent(*continent_clicks):
         return clicked_continent
     return "Total"
 
+
 @app.callback(
     Output('main_map', 'figure'),
     [Input('status_filter', 'value'),
      Input('time_slider', 'value'),
-     Input('last_clicked_continent', 'data')]
+     Input('last_clicked_continent', 'data'),
+     Input('main_map', 'relayoutData')]
 )
-def update_map(status, time_range, clicked_continent):
+def update_map(status, time_range, clicked_continent, zoom_info):
     """
     Update the map based on the selected status, time range, and clicked continent.
 
@@ -215,6 +217,8 @@ def update_map(status, time_range, clicked_continent):
     """
     # Filter DataFrame based on status and time range
     filtered_df = df.copy()
+    filtered_df["Installation Type"] = filtered_df["Installation Type"].apply(
+        lambda x: 'offshore' if str(x).lower().startswith('offshore') else x)
 
     if clicked_continent != "Total":
         filtered_df = filtered_df[filtered_df["Region"] == clicked_continent]
@@ -224,8 +228,25 @@ def update_map(status, time_range, clicked_continent):
         start_year, end_year = time_range
         filtered_df = filtered_df[(filtered_df["Start year"] >= start_year) & (filtered_df["Start year"] <= end_year)]
 
-    # debug it is way too slow so we just limit ourselves to 1000 circles
-    #filtered_df = filtered_df.nlargest(1000, "Capacity (MW)")
+    agg_country = filtered_df.groupby(["Region", "Subregion", "Country", "Status", "Installation Type"]).agg(
+        {"Capacity (MW)": "sum", "Latitude": "mean", "Longitude": "mean",
+         "Start year": lambda x: round(x.dropna().mean()) if not x.dropna().empty else np.nan}).reset_index()
+
+    if zoom_info and 'mapbox.zoom' in zoom_info:
+        zoom_level = zoom_info['mapbox.zoom']
+    else:
+        zoom_level = 1
+
+    if zoom_level >= 3:
+        data = filtered_df  # Filter data based on zoom level
+        marker_min = 3
+        hover_name = 'Project Name'
+        opacity = 0.7
+    else:
+        data = agg_country
+        marker_min = 4
+        hover_name = "Country"
+        opacity = 1
 
     # Create a color mapping for the statuses (test based on https://colorbrewer2.org/#type=diverging&scheme=BrBG&n=6)
     color_mapping = {
@@ -239,15 +260,30 @@ def update_map(status, time_range, clicked_continent):
         'shelved': '#d95f02'
     }
 
-    fig = px.scatter_mapbox(filtered_df,
+    fig = px.scatter_mapbox(data,
                             lat="Latitude",
                             lon="Longitude",
                             size="Capacity (MW)",
-                            hover_data=["Capacity (MW)", "Installation Type"],
+                            hover_name=hover_name,
+                            hover_data={"Capacity (MW)": True,
+                                        "Installation Type": True,
+                                        "Latitude": False,
+                                        "Longitude": False},
+                            category_orders={'Status': ['operating', 'construction', 'pre-construction', 'announced',
+                                                        'retired', 'mothballed', 'shelved', 'cancelled']
+                                             },
                             color="Status",
                             color_discrete_map=color_mapping,
-                            zoom=2
+                            zoom=zoom_level,
+                            opacity=opacity
                             )
+
+    if zoom_info and 'mapbox.center' in zoom_info:
+        fig.update_layout(
+            mapbox=dict(
+                center=dict(lat=zoom_info['mapbox.center']['lat'], lon=zoom_info['mapbox.center']['lon']),
+                zoom=zoom_level
+            ))
 
     # style=: Allowed values which do not require a Mapbox API token are 'open-street-map', 'white-bg', 'carto-positron',
     # 'carto-darkmatter', 'stamen-terrain', 'stamen-toner', 'stamen-watercolor' -> none of them works with cluster
@@ -255,9 +291,18 @@ def update_map(status, time_range, clicked_continent):
     # 'light', 'dark', 'satellite', 'satellite- streets' -> 'light' or 'dark' shows colours of markers best
     fig.update_layout(mapbox_style="carto-positron")
     fig.update_layout(margin={"r": 0, "t": 0, "l": 0, "b": 0})
-    fig.update_traces(marker_sizemin=3)
+
+    fig.update_traces(marker_sizemin=marker_min)
+
+    fig.update_layout(legend=dict(
+        yanchor="top",
+        y=0.955,
+        xanchor="right",
+        x=1.2
+    ))
 
     return fig
+
 
 @app.callback(
     Output('bar_chart', 'children'),
@@ -292,10 +337,10 @@ def update_bar_chart(status, time_range, clicked_continent):
 
     return graph
 
+
 if __name__ == "__main__":
     load_dotenv()
     SERVER_PORT = os.getenv("SERVER_PORT")
 
     # run the server - debug=True auto reloads browser when dev makes changes
     app.run_server(port=SERVER_PORT, debug=True)
-
