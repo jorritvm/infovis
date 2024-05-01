@@ -7,10 +7,11 @@ from dotenv import load_dotenv
 
 import pandas as pd
 import dash
-from dash import dcc, html, Input, Output, State
+from dash import dcc, html, Input, Output
 import dash_bootstrap_components as dbc
 import plotly.express as px
 import numpy as np
+import plotly.graph_objects as go
 
 # load data
 df = pd.read_parquet("../data/clean/gwpt.parquet")
@@ -22,6 +23,16 @@ app = dash.Dash(
     __name__,
     external_stylesheets=[dbc.themes.SLATE, dbc.icons.FONT_AWESOME],
 )
+
+
+# create blank figure to show during initial loading
+def blank_figure():
+    fig = go.Figure(go.Scatter(x=[], y=[]))
+    fig.update_layout(template=None)
+    fig.update_xaxes(showgrid=False, showticklabels=False, zeroline=False)
+    fig.update_yaxes(showgrid=False, showticklabels=False, zeroline=False)
+    return fig
+
 
 # create the cards
 continents = ["Total"] + list(geo["Region"].unique())
@@ -47,6 +58,9 @@ country_filter = dcc.Dropdown(
     id='country_filter',
     options=[]
 )
+
+# TODO: add filter for type: offshore-onshore-unknown
+
 unique_status = list(df["Status"].unique())
 unique_status.sort()
 status_filter = dcc.Dropdown(
@@ -66,19 +80,14 @@ time_slider = dcc.RangeSlider(
 )
 
 # create the main map
-main_map = html.Div("main map content",
-                    id="main_map",
-                    style={'background-color': 'green'})
+main_map = dcc.Graph(id='main_map', figure=blank_figure())
 
 # create the bar chart
-bar_chart = html.Div("bar chart content",
-                     id="bar_chart",
-                     style={})
+bar_chart = dcc.Graph(id='bar_chart', figure=blank_figure())
 
 # create the app's layout
 app.layout = dbc.Container([
     dcc.Store(id='last_clicked_continent', data='Total'),  # Add this line here
-   # dcc.Store(id='zoom_info'),
     dbc.Row([html.H1("Global wind power tracker analysis",
                      className='text-center mb-4',
                      style={'height': '45px'})]),
@@ -97,8 +106,7 @@ app.layout = dbc.Container([
                 style={'height': '5vh'}),
             dbc.Row([
                 dbc.Col(  # map column
-                    dbc.Row(dcc.Graph(id='main_map'), style={'height': '85vh'}),
-                    style={'height': '85vh'},
+                    dbc.Row(main_map, style={'height': '95vh'}),
                     width=9),
                 dbc.Col(  # barchart column
                     dbc.Row(bar_chart, style={'height': '85vh'}),
@@ -201,9 +209,10 @@ def update_clicked_continent(*continent_clicks):
     [Input('status_filter', 'value'),
      Input('time_slider', 'value'),
      Input('last_clicked_continent', 'data'),
-     Input('main_map', 'relayoutData')]
+     Input('main_map', 'relayoutData'),
+     Input('bar_chart', 'clickData')]
 )
-def update_map(status, time_range, clicked_continent, zoom_info):
+def update_map(status, time_range, clicked_continent, zoom_info, clickdata):
     """
     Update the map based on the selected status, time range, and clicked continent.
 
@@ -301,11 +310,19 @@ def update_map(status, time_range, clicked_continent, zoom_info):
         x=1.2
     ))
 
+    # Center and zoom to clicked project on bar chart
+    # TODO: let this only run right after clicking on the bar chart
+    if clickdata is not None:
+        clicked_project = filtered_df[filtered_df['Project Name'] == clickdata['points'][0]['label']]
+        fig.update_layout(mapbox_center_lat=float(clicked_project['Latitude']),
+                          mapbox_center_lon=float(clicked_project['Longitude']),
+                          mapbox_zoom=7)
+
     return fig
 
 
 @app.callback(
-    Output('bar_chart', 'children'),
+    Output('bar_chart', 'figure'),
     [Input('status_filter', 'value'),
      Input('time_slider', 'value'),
      Input('last_clicked_continent', 'data')]
@@ -332,10 +349,7 @@ def update_bar_chart(status, time_range, clicked_continent):
     fig = px.bar(top_20, x='Capacity (MW)', y='Project Name', orientation='h')
     fig.update_layout(title_text="Top 20 Largest Wind Farms")
 
-    # Convert the Plotly figure to a Dash component
-    graph = dcc.Graph(figure=fig, style={'width': '100%', 'height': '100%'})
-
-    return graph
+    return fig
 
 
 if __name__ == "__main__":
