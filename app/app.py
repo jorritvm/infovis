@@ -18,7 +18,10 @@ df = pd.read_parquet("../data/clean/gwpt.parquet")
 agg = pd.read_parquet("../data/clean/gwpt_agg.parquet")
 geo = pd.read_parquet("../data/clean/geo.parquet")
 
-# create the app
+
+####################
+# app & components
+####################
 app = dash.Dash(
     __name__,
     external_stylesheets=[dbc.themes.SLATE, dbc.icons.FONT_AWESOME],
@@ -50,16 +53,16 @@ for continent in continents:
     continents_dbc = continents_dbc + [continent_dbc]
 
 # create the filters
+# create the filters & slider
 sub_region_filter = dcc.Dropdown(
     id='sub_region_filter',
     options=[]
 )
+
 country_filter = dcc.Dropdown(
     id='country_filter',
     options=[]
 )
-
-# TODO: add filter for type: offshore-onshore-unknown
 
 unique_status = list(df["Status"].unique())
 unique_status.sort()
@@ -120,13 +123,23 @@ app.layout = dbc.Container([
 )
 
 
+####################
 # callbacks
+####################
 @app.callback(
     [Output(f"{continent}_capacity", 'children') for continent in continents],
     [Input('status_filter', 'value'),
      Input('time_slider', 'value')]
 )
 def update_capacities_on_cards(status, time_range):
+    """
+    Updates the values on the BAN's when the status dropdown or time_range has been modified
+    Args:
+        status: string
+        time_range: tuple of (start_year, end_year)
+    Returns:
+        A list of strings, representing the capacities per continent
+    """
     # filter by status
     tmp = agg.copy()
     if status is not None and status != []:
@@ -159,6 +172,13 @@ def update_capacities_on_cards(status, time_range):
     [Input(f"{continent}_click", 'n_clicks') for continent in continents]
 )
 def update_subregion_filter(*button_clicks):
+    """
+    Updates the available options in the subregion dropdown when the region BAN has been clicked
+    Args:
+        *button_clicks: not used
+    Returns:
+        a list of (string) sub region values
+    """
     options = []
     ctx = dash.callback_context
     if ctx.triggered:
@@ -175,6 +195,13 @@ def update_subregion_filter(*button_clicks):
     Input("sub_region_filter", "value")
 )
 def update_country_filter(sub_region):
+    """
+    Updates the available options in the country dropdown when the subregion filter has been selected
+    Args:
+        sub_region: string specifying a subregion
+    Returns:
+        list of (string) countries in this subregion
+    """
     if sub_region == "" or sub_region is None:
         return []
     else:
@@ -328,6 +355,15 @@ def update_map(status, time_range, clicked_continent, zoom_info, clickdata):
      Input('last_clicked_continent', 'data')]
 )
 def update_bar_chart(status, time_range, clicked_continent):
+    """
+    Updates the plotly bar chart when the user modifies the status filter, time slider or clicks on another continent
+    Args:
+        status: list of selected status strings
+        time_range: tuple of 2 integers (start & end year)
+        clicked_continent: string value for last clicked continent
+    Returns:
+        plotly figure to update the bar chart
+    """
     # Filter DataFrame based on status and time range
     filtered_df = df.copy()
 
@@ -356,5 +392,5 @@ if __name__ == "__main__":
     load_dotenv()
     SERVER_PORT = os.getenv("SERVER_PORT")
 
-    # run the server - debug=True auto reloads browser when dev makes changes
+    # run the server - debug=True auto reloads browser when the dev makes changes
     app.run_server(port=SERVER_PORT, debug=True)
