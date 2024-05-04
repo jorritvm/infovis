@@ -17,13 +17,35 @@ def blank_figure():
     return fig
 
 
-def filter_data(df, clicked_continent, status, time_range):
+def filter_data(df, continent, sub_region, country, status, time_range):
+    """
+    Filter the provided dataframe based on the values of the provided filters
+    Args:
+        df:
+        continent: string
+        sub_region: string
+        country: string
+        status: list of string
+        time_range: tuple (int, int)
+
+    Returns:
+        a filtered df
+    """
+
     # Filter DataFrame based on status and time range
     filtered_df = df.copy()
 
-    # Filter by clicked continent
-    if clicked_continent != "Total":
-        filtered_df = filtered_df[filtered_df["Region"] == clicked_continent]
+    # Filter by active continent
+    if continent != "Total":
+        filtered_df = filtered_df[filtered_df["Region"] == continent]
+
+    # Filter by sub region
+    if sub_region is not None and sub_region != "":
+        filtered_df = filtered_df[filtered_df["Subregion"] == sub_region]
+
+    # Filter by country
+    if country is not None and country != "":
+        filtered_df = filtered_df[filtered_df["Country"] == country]
 
     # Filter by status
     if status is not None and status != []:
@@ -35,3 +57,4 @@ def filter_data(df, clicked_continent, status, time_range):
         filtered_df = filtered_df[(filtered_df["Start year"] >= start_year) & (filtered_df["Start year"] <= end_year)]
 
     return filtered_df
+

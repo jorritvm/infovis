@@ -249,13 +249,15 @@ def update_ban_style(last_clicked_continent):
 
 @app.callback(
     Output('main_map', 'figure'),
-    [Input('status_filter', 'value'),
+    [Input('last_clicked_continent', 'data'),
+     Input('sub_region_filter', 'value'),
+     Input('country_filter', 'value'),
+     Input('status_filter', 'value'),
      Input('time_slider', 'value'),
-     Input('last_clicked_continent', 'data'),
      Input('main_map', 'relayoutData'),
      Input('bar_chart', 'clickData')]
 )
-def update_map(status, time_range, clicked_continent, zoom_info, clickdata):
+def update_map(continent, sub_region, country, status, time_range, zoom_info, clickdata):
     """
     Update the map based on the selected status, time range, and clicked continent.
 
@@ -267,7 +269,7 @@ def update_map(status, time_range, clicked_continent, zoom_info, clickdata):
     Returns:
     dl.Map: Updated map with markers representing wind farms.
     """
-    filtered_df = filter_data(df, clicked_continent, status, time_range)
+    filtered_df = filter_data(df, continent, sub_region, country, status, time_range)
 
     agg_country = filtered_df.groupby(["Region", "Subregion", "Country", "Status", "Installation Type"]).agg(
         {"Capacity (MW)": "sum", "Latitude": "mean", "Longitude": "mean",
@@ -355,24 +357,33 @@ def update_map(status, time_range, clicked_continent, zoom_info, clickdata):
 
 @app.callback(
     Output('bar_chart', 'figure'),
-    [Input('status_filter', 'value'),
+    [Input('last_clicked_continent', 'data'),
+     Input('sub_region_filter', 'value'),
+     Input('country_filter', 'value'),
+     Input('status_filter', 'value'),
      Input('time_slider', 'value'),
-     Input('last_clicked_continent', 'data')]
+     ]
 )
-def update_bar_chart(status, time_range, clicked_continent):
+def update_bar_chart(continent, sub_region, country, status, time_range):
     """
     Updates the plotly bar chart when the user modifies the status filter, time slider or clicks on another continent
     Args:
         status: list of selected status strings
         time_range: tuple of 2 integers (start & end year)
-        clicked_continent: string value for last clicked continent
+        continent: string value for last clicked continent
     Returns:
         plotly figure to update the bar chart
     """
-    filtered_df = filter_data(df, clicked_continent, status, time_range)
+    # filter the whole dataset
+    dfx = filter_data(df, continent, sub_region, country, status, time_range)
+
+    # aggregate onto project level: combine project phases and statusses
+    dfx_agg = dfx.groupby(["Region", "Subregion", "Country", "Installation Type", "Project Name"]).agg(
+        {"Capacity (MW)": "sum", "Latitude": "mean", "Longitude": "mean",
+         "Start year": "mean"}).reset_index()
 
     # Sort DataFrame by capacity in descending order and select top 20 wind farms
-    top_20 = filtered_df.nlargest(20, "Capacity (MW)")
+    top_20 = dfx_agg.nlargest(20, "Capacity (MW)")
     top_20 = top_20[::-1]
 
     # Create horizontal bar chart
