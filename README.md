@@ -1,6 +1,7 @@
 # Infovis
 ## Introduction 
-Project repository for the infovis project at VUB 2024.
+Repository for the infovis project at VUB 2024.   
+Implements an interactive visualisation to explore global wind power.
 
 ## Setting up your local copy
 1. Clone the repo
@@ -16,14 +17,13 @@ Project repository for the infovis project at VUB 2024.
 1. Copy `.env.template` to `.env` and configure the required secrets (e.g. port, password, ...)
 
 
-## Running the notebook
+## Running the notebook(s)
 1. Get the jupyter extension for vs code
-1. Install the dependencies in `etl/requirements.txt`
 1. Run the notebook from vs code using the ipython kernel.
 
 ## Running the dashboard
 1. Run the dash app in `app/app.py` from your IDEA of choice
-2. Browse to the browser.
+2. Explore the app using your web browser.
 
 ## Contribute
 1. Read the documentation in the `doc/` folder
