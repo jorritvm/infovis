@@ -222,6 +222,28 @@ def update_clicked_continent(*continent_clicks):
         return "Total"
 
 
+# Define a callback to update the button style based on the last clicked continent
+@app.callback(
+    [Output(f"{continent}_click", 'color') for continent in continents],
+    [Input('last_clicked_continent', 'data')]
+)
+def update_ban_style(last_clicked_continent):
+    """
+    Darkens the BAN that you have clicked on to show it has been selected
+
+    Parameters:
+    last_clicked_continent: string representing the currently active continent filter
+
+    Returns:
+    a list of color values for all the continent buttons 'color' prop
+    """
+    result = []
+    for continent in continents:
+        if continent == last_clicked_continent:
+            result.append("info")
+        else:
+            result.append("secondary")
+    return result
 
 
 @app.callback(
