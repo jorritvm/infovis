@@ -25,7 +25,7 @@ geo = pd.read_parquet("../data/clean/geo.parquet")
 ####################
 app = dash.Dash(
     __name__,
-    external_stylesheets=[dbc.themes.SLATE, dbc.icons.FONT_AWESOME],
+    external_stylesheets=[dbc.themes.SLATE, dbc.icons.FONT_AWESOME, 'styles.css'],
 )
 
 
@@ -69,7 +69,8 @@ time_slider = dcc.RangeSlider(
     max=y_max,
     step=1,
     marks={i: str(i) for i in range(y_min, y_max + 1) if i % 10 == 0},
-    value=[y_min, y_max]  # Default value
+    value=[y_min, y_max],  # Default value
+    className='custom_white_text'  # Set the text color to white
 )
 
 # create the main map
