@@ -387,8 +387,14 @@ def update_bar_chart(continent, sub_region, country, status, time_range):
     top_20 = top_20[::-1]
 
     # Create horizontal bar chart
-    fig = px.bar(top_20, x='Capacity (MW)', y='Project Name', orientation='h')
-    fig.update_layout(title_text="Top 20 Largest Wind Farms")
+    fig = px.bar(top_20,
+                 x='Capacity (MW)',
+                 y='Project Name',
+                 orientation='h',
+                 hover_data=['Region', 'Subregion', 'Country',
+                             'Project Name', 'Capacity (MW)'],
+                 title="Top 20 Largest Wind Farms"
+                 )
 
     return fig
 
