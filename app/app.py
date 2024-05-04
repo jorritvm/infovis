@@ -10,8 +10,9 @@ import dash
 from dash import dcc, html, Input, Output
 import dash_bootstrap_components as dbc
 import plotly.express as px
-import numpy as np
-import plotly.graph_objects as go
+
+from utils.utils import *
+
 
 # load data
 df = pd.read_parquet("../data/clean/gwpt.parquet")
@@ -28,20 +29,10 @@ app = dash.Dash(
 )
 
 
-# create blank figure to show during initial loading
-def blank_figure():
-    fig = go.Figure(go.Scatter(x=[], y=[]))
-    fig.update_layout(template=None)
-    fig.update_xaxes(showgrid=False, showticklabels=False, zeroline=False)
-    fig.update_yaxes(showgrid=False, showticklabels=False, zeroline=False)
-    return fig
-
-
-# create the cards
+# create the sidebar buttons (BAN's)
 continents = ["Total"] + list(geo["Region"].unique())
 continents_dbc = []
 for continent in continents:
-    # to make it clickable I wrap the dbc card in an html div
     continent_dbc = dbc.Button([
         html.H4(f"{continent} Capacity", className="card-title"),
         html.H6("", className="card-subtitle", id=f"{continent}_capacity")
@@ -52,7 +43,6 @@ for continent in continents:
         size="lg")
     continents_dbc = continents_dbc + [continent_dbc]
 
-# create the filters
 # create the filters & slider
 sub_region_filter = dcc.Dropdown(
     id='sub_region_filter',
@@ -141,9 +131,9 @@ def update_capacities_on_cards(status, time_range):
         A list of strings, representing the capacities per continent
     """
     # filter by status
-    tmp = agg.copy()
+    tmp = df.copy()
     if status is not None and status != []:
-        tmp = agg[agg["Status"].isin(status)]
+        tmp = tmp[tmp["Status"].isin(status)]
 
     # filter by time range
     if time_range is not None:
@@ -215,7 +205,7 @@ def update_country_filter(sub_region):
 )
 def update_clicked_continent(*continent_clicks):
     """
-    Update the data for the last clicked continent.
+    Update the data (dcc.store value) for the last clicked continent.
 
     Parameters:
     *continent_clicks: Variable number of input arguments representing the number of clicks for each continent.
@@ -228,7 +218,10 @@ def update_clicked_continent(*continent_clicks):
         button_id = ctx.triggered[0]['prop_id'].split('.')[0]
         clicked_continent = button_id.replace("_click", "")
         return clicked_continent
-    return "Total"
+    else:
+        return "Total"
+
+
 
 
 @app.callback(
@@ -251,22 +244,11 @@ def update_map(status, time_range, clicked_continent, zoom_info, clickdata):
     Returns:
     dl.Map: Updated map with markers representing wind farms.
     """
-    # Filter DataFrame based on status and time range
-    filtered_df = df.copy()
-    filtered_df["Installation Type"] = filtered_df["Installation Type"].apply(
-        lambda x: 'offshore' if str(x).lower().startswith('offshore') else x)
-
-    if clicked_continent != "Total":
-        filtered_df = filtered_df[filtered_df["Region"] == clicked_continent]
-    if status is not None and status != []:
-        filtered_df = filtered_df[filtered_df["Status"].isin(status)]
-    if time_range is not None:
-        start_year, end_year = time_range
-        filtered_df = filtered_df[(filtered_df["Start year"] >= start_year) & (filtered_df["Start year"] <= end_year)]
+    filtered_df = filter_data(df, clicked_continent, status, time_range)
 
     agg_country = filtered_df.groupby(["Region", "Subregion", "Country", "Status", "Installation Type"]).agg(
         {"Capacity (MW)": "sum", "Latitude": "mean", "Longitude": "mean",
-         "Start year": lambda x: round(x.dropna().mean()) if not x.dropna().empty else np.nan}).reset_index()
+         "Start year": "mean"}).reset_index()
 
     if zoom_info and 'mapbox.zoom' in zoom_info:
         zoom_level = zoom_info['mapbox.zoom']
@@ -364,18 +346,7 @@ def update_bar_chart(status, time_range, clicked_continent):
     Returns:
         plotly figure to update the bar chart
     """
-    # Filter DataFrame based on status and time range
-    filtered_df = df.copy()
-
-    # Filter by clicked continent
-    if clicked_continent != "Total":
-        filtered_df = filtered_df[filtered_df["Region"] == clicked_continent]
-
-    if status is not None and status != []:
-        filtered_df = filtered_df[filtered_df["Status"].isin(status)]
-    if time_range is not None:
-        start_year, end_year = time_range
-        filtered_df = filtered_df[(filtered_df["Start year"] >= start_year) & (filtered_df["Start year"] <= end_year)]
+    filtered_df = filter_data(df, clicked_continent, status, time_range)
 
     # Sort DataFrame by capacity in descending order and select top 20 wind farms
     top_20 = filtered_df.nlargest(20, "Capacity (MW)")
