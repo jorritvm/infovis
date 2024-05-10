@@ -28,6 +28,7 @@ def generate_sub_region_filter():
     """create the sub region filter"""
     sub_region_filter = dcc.Dropdown(
         id='sub_region_filter',
+        placeholder="sub region",
         options=[]
     )
     return sub_region_filter
@@ -37,6 +38,7 @@ def generate_country_filter():
     """create the country filter"""
     country_filter = dcc.Dropdown(
         id='country_filter',
+        placeholder="country",
         options=[]
     )
     return country_filter
@@ -50,6 +52,7 @@ def generate_status_filter(df):
         id='status_filter',
         options=unique_status,
         multi=True,
+        placeholder="status",
     )
     return status_filter
 
@@ -62,6 +65,7 @@ def generate_type_filter(df):
         id='type_filter',
         options=unique_type,
         multi=True,
+        placeholder="type",
     )
     return type_filter
 
@@ -76,7 +80,8 @@ def generate_time_slider(df):
         max=y_max,
         step=1,
         marks={i: str(i) for i in range(y_min, y_max + 1) if i % 10 == 0},
-        value=[y_min, y_max],  # Default value
+        value=[y_min, y_max],  # Default value,
+        tooltip={"placement": "bottom", "always_visible": True},
         className='custom_white_text'  # Set the text color to white
     )
     return time_slider
