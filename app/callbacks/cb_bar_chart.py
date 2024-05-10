@@ -10,10 +10,11 @@ def register_update_bar_chart(app, df):
          Input('sub_region_filter', 'value'),
          Input('country_filter', 'value'),
          Input('status_filter', 'value'),
+         Input('type_filter', 'value'),
          Input('time_slider', 'value'),
          ]
     )
-    def update_bar_chart(continent, sub_region, country, status, time_range):
+    def update_bar_chart(continent, sub_region, country, status, itype, time_range):
         """
         Updates the plotly bar chart when the user modifies the status filter, time slider or clicks on another continent
         Args:
@@ -24,7 +25,7 @@ def register_update_bar_chart(app, df):
             plotly figure to update the bar chart
         """
         # filter the whole dataset
-        dfx = filter_data(df, continent, sub_region, country, status, time_range)
+        dfx = filter_data(df, continent, sub_region, country, status, itype, time_range)
 
         # aggregate onto project level: combine project phases and statusses
         dfx_agg = dfx.groupby(["Region", "Subregion", "Country", "Installation Type", "Project Name"]).agg(

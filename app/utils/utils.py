@@ -3,7 +3,7 @@ this module contains utilities functions for the app
 """
 
 
-def filter_data(df, continent, sub_region, country, status, time_range):
+def filter_data(df, continent, sub_region, country, status, itype, time_range):
     """
     Filter the provided dataframe based on the values of the provided filters
     Args:
@@ -12,6 +12,7 @@ def filter_data(df, continent, sub_region, country, status, time_range):
         sub_region: string
         country: string
         status: list of string
+        itype: list of string
         time_range: tuple (int, int)
 
     Returns:
@@ -36,6 +37,10 @@ def filter_data(df, continent, sub_region, country, status, time_range):
     # Filter by status
     if status is not None and status != []:
         filtered_df = filtered_df[filtered_df["Status"].isin(status)]
+
+    # Filter by type
+    if itype is not None and itype != []:
+        filtered_df = filtered_df[filtered_df["Installation Type"].isin(itype)]
 
     # Filter by time range
     if time_range is not None:

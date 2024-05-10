@@ -11,11 +11,12 @@ def register_update_map(app, df):
          Input('sub_region_filter', 'value'),
          Input('country_filter', 'value'),
          Input('status_filter', 'value'),
+         Input('type_filter', 'value'),
          Input('time_slider', 'value'),
          Input('main_map', 'relayoutData'),
          Input('bar_chart', 'clickData')]
     )
-    def update_map(continent, sub_region, country, status, time_range, zoom_info, clickdata):
+    def update_map(continent, sub_region, country, status, itype, time_range, zoom_info, clickdata):
         """
         Update the map based on the selected status, time range, and clicked continent.
 
@@ -27,7 +28,7 @@ def register_update_map(app, df):
         Returns:
         dl.Map: Updated map with markers representing wind farms.
         """
-        filtered_df = filter_data(df, continent, sub_region, country, status, time_range)
+        filtered_df = filter_data(df, continent, sub_region, country, status, itype, time_range)
 
         agg_country = filtered_df.groupby(["Region", "Subregion", "Country", "Status", "Installation Type"]).agg(
             {"Capacity (MW)": "sum", "Latitude": "mean", "Longitude": "mean",

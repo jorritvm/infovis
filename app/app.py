@@ -58,7 +58,8 @@ app.layout = dbc.Container([
                 dbc.Col(sub_region_filter, width=2),
                 dbc.Col(country_filter, width=2),
                 dbc.Col(status_filter, width=2),
-                dbc.Col(time_slider, width=6)
+                dbc.Col(type_filter, width=2),
+                dbc.Col(time_slider, width=4)
             ],
                 style={'height': '5vh'}),
             dbc.Row([

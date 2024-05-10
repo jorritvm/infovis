@@ -1,6 +1,8 @@
 import dash
 from dash.dependencies import Input, Output
 
+from utils.utils import filter_data
+
 
 def register_update_clicked_continent(app, continents):
     @app.callback(
@@ -30,9 +32,10 @@ def register_update_capacities(app, continents, df):
     @app.callback(
         [Output(f"{continent}_capacity", 'children') for continent in continents],
         [Input('status_filter', 'value'),
+         Input('type_filter', 'value'),
          Input('time_slider', 'value')]
     )
-    def update_capacities_on_cards(status, time_range):
+    def update_capacities_on_cards(status, itype, time_range):
         """
         Updates the values on the BAN's when the status dropdown or time_range has been modified
         Args:
@@ -41,23 +44,15 @@ def register_update_capacities(app, continents, df):
         Returns:
             A list of strings, representing the capacities per continent
         """
-        # filter by status
-        tmp = df.copy()
-        if status is not None and status != []:
-            tmp = tmp[tmp["Status"].isin(status)]
-
-        # filter by time range
-        if time_range is not None:
-            start_year, end_year = time_range
-            tmp = tmp[(tmp["Start year"] >= start_year) & (tmp["Start year"] <= end_year)]
+        dfx = filter_data(df, "Total", None, None, status, itype, time_range)
 
         # make output values for every continent
         output_capacities = []
         for continent in continents:
             if continent == "Total":
-                capa = tmp["Capacity (MW)"].sum()
+                capa = dfx["Capacity (MW)"].sum()
             else:
-                capa = tmp[tmp["Region"] == continent]["Capacity (MW)"].sum()
+                capa = dfx[dfx["Region"] == continent]["Capacity (MW)"].sum()
             output_capacities = output_capacities + [capa]
 
         # format output
