@@ -2,20 +2,6 @@
 this module contains utilities functions for the app
 """
 
-import plotly.graph_objects as go
-
-
-def blank_figure():
-    """
-    create blank figure to show during initial loading
-    Returns: a blank plotly graphics object
-    """
-    fig = go.Figure(go.Scatter(x=[], y=[]))
-    fig.update_layout(template=None)
-    fig.update_xaxes(showgrid=False, showticklabels=False, zeroline=False)
-    fig.update_yaxes(showgrid=False, showticklabels=False, zeroline=False)
-    return fig
-
 
 def filter_data(df, continent, sub_region, country, status, time_range):
     """

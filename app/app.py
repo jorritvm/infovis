@@ -11,6 +11,8 @@ from dash import dcc, html, Input, Output
 import dash_bootstrap_components as dbc
 import plotly.express as px
 
+from components import filters
+from components.visualisations import main_map, bar_chart
 from utils.utils import *
 
 
@@ -25,59 +27,18 @@ geo = pd.read_parquet("../data/clean/geo.parquet")
 ####################
 app = dash.Dash(
     __name__,
-    external_stylesheets=[dbc.themes.SLATE, dbc.icons.FONT_AWESOME, 'styles.css'],
+    external_stylesheets=[dbc.themes.SLATE, dbc.icons.FONT_AWESOME, 'assets/css/styles.css'],
 )
 
+# create the filters
+continents = filters.generate_continents(geo)
+continents_dbc = filters.generate_continent_cards(continents)
+sub_region_filter = filters.generate_sub_region_filter()
+country_filter = filters.generate_country_filter()
+status_filter = filters.generate_status_filter(df)
+type_filter = filters.generate_type_filter(df)
+time_slider = filters.generate_time_slider(df)
 
-# create the sidebar buttons (BAN's)
-continents = ["Total"] + list(geo["Region"].unique())
-continents_dbc = []
-for continent in continents:
-    continent_dbc = dbc.Button([
-        html.H4(f"{continent} Capacity", className="card-title"),
-        html.H6("", className="card-subtitle", id=f"{continent}_capacity")
-    ],
-        id=f"{continent}_click",
-        outline=False,
-        color="secondary",
-        size="lg")
-    continents_dbc = continents_dbc + [continent_dbc]
-
-# create the filters & slider
-sub_region_filter = dcc.Dropdown(
-    id='sub_region_filter',
-    options=[]
-)
-
-country_filter = dcc.Dropdown(
-    id='country_filter',
-    options=[]
-)
-
-unique_status = list(df["Status"].unique())
-unique_status.sort()
-status_filter = dcc.Dropdown(
-    id='status_filter',
-    options=unique_status,
-    multi=True,
-)
-y_min = min(df["Start year"].min(), df["Retired year"].min())
-y_max = max(df["Start year"].max(), df["Retired year"].max())
-time_slider = dcc.RangeSlider(
-    id='time_slider',
-    min=y_min,
-    max=y_max,
-    step=1,
-    marks={i: str(i) for i in range(y_min, y_max + 1) if i % 10 == 0},
-    value=[y_min, y_max],  # Default value
-    className='custom_white_text'  # Set the text color to white
-)
-
-# create the main map
-main_map = dcc.Graph(id='main_map', figure=blank_figure())
-
-# create the bar chart
-bar_chart = dcc.Graph(id='bar_chart', figure=blank_figure())
 
 # create the app's layout
 app.layout = dbc.Container([
