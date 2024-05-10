@@ -18,6 +18,13 @@ def filter_data(df, continent, sub_region, country, status, itype, time_range):
     Returns:
         a filtered df
     """
+    # # keep this output for debug purposes
+    # print(continent)
+    # print(sub_region)
+    # print(country)
+    # print(status)
+    # print(itype)
+    # print(time_range)
 
     # Filter DataFrame based on status and time range
     filtered_df = df.copy()

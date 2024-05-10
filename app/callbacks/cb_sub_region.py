@@ -13,7 +13,7 @@ def register_update_subregion_filter(app, continents, agg):
         Args:
             *button_clicks: not used
         Returns:
-            a list of (string) sub region values
+            a list of (string) sub region values and an empty list for the countries
         """
         options = []
         ctx = dash.callback_context
@@ -24,3 +24,14 @@ def register_update_subregion_filter(app, continents, agg):
             if continent != "Total":
                 options = agg[agg["Region"] == continent]["Subregion"].unique()
         return options
+
+
+
+def register_reset_subregion(app, continents):
+    @app.callback(
+        Output("sub_region_filter", 'value'),
+        [Input(f"{continent}_click", 'n_clicks') for continent in continents]
+    )
+    def reset_subregion(*button_clicks):
+        return None
+

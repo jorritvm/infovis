@@ -1,3 +1,4 @@
+from dash import callback_context
 from dash.dependencies import Input, Output
 import plotly.express as px
 
@@ -24,7 +25,9 @@ def register_update_bar_chart(app, df):
         Returns:
             plotly figure to update the bar chart
         """
+
         # filter the whole dataset
+        print("filtering for bar chart")
         dfx = filter_data(df, continent, sub_region, country, status, itype, time_range)
 
         # aggregate onto project level: combine project phases and statusses
