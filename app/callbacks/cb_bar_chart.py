@@ -25,28 +25,48 @@ def register_update_bar_chart(app, df):
         Returns:
             plotly figure to update the bar chart
         """
-
         # filter the whole dataset
         print("filtering for bar chart")
         dfx = filter_data(df, continent, sub_region, country, status, itype, time_range)
-
-        # aggregate onto project level: combine project phases and statusses
-        dfx_agg = dfx.groupby(["Region", "Subregion", "Country", "Installation Type", "Project Name"]).agg(
+        # aggregate onto project level: combine project phases and statuses
+        dfx_agg = dfx.groupby(["Region", "Subregion", "Country", "Installation Type", "Project Name", "Status"]).agg(
             {"Capacity (MW)": "sum", "Latitude": "mean", "Longitude": "mean",
              "Start year": "mean"}).reset_index()
-
         # Sort DataFrame by capacity in descending order and select top 20 wind farms
         top_20 = dfx_agg.nlargest(20, "Capacity (MW)")
-        top_20 = top_20[::-1]
-
+        top_20 = top_20.sort_values("Capacity (MW)")
         # Create horizontal bar chart
+        color_mapping = {
+            'construction': '#5ab4ac',
+            'operating': '#01665e',
+            'announced': '#d8b365',
+            'mothballed': 'lightgrey',
+            'cancelled': 'black',
+            'pre-construction': '#c7eae5',
+            'retired': '#666666',
+            'shelved': '#d95f02'
+        }
         fig = px.bar(top_20,
                      x='Capacity (MW)',
                      y='Project Name',
                      orientation='h',
+                     color='Status',
+                     color_discrete_map=color_mapping,
                      hover_data=['Region', 'Subregion', 'Country',
                                  'Project Name', 'Capacity (MW)'],
                      title="Top 20 Largest Wind Farms"
                      )
-
+        fig.update_layout(
+            legend=dict(
+                orientation="h",
+                yanchor="top",
+                y=-0.2,
+                xanchor="right",
+                x=1
+            ),
+            yaxis=dict(
+                categoryorder='total ascending'
+            )
+        )
+        fig.update_yaxes(title=None)
         return fig
