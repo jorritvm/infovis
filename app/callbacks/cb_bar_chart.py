@@ -52,6 +52,7 @@ def register_update_bar_chart(app, df):
                      title="Top 20 Largest Wind Farms"
                      )
         fig.update_layout(
+            showlegend=False,
             legend=dict(
                 orientation="h",
                 yanchor="top",
@@ -61,7 +62,32 @@ def register_update_bar_chart(app, df):
             ),
             yaxis=dict(
                 categoryorder='total ascending'
-            )
+            ), 
+            autosize=False,
+            margin=dict(
+                l=220,
+                r=5,  # right margin
+                b=100,  # bottom margin
+                t=100,  # top margin
+                ),
+                title_x=0.5,  # title position
+                annotations=[
+                    dict(
+                        x=-2,  # x position
+                        y=-0.15,  # y position
+                        showarrow=False,
+                        text="Capacity (MW)",  # annotation text
+                        xref="paper",
+                        yref="paper",
+                        font=dict(size=14)
+                    )
+                ]
         )
-        fig.update_yaxes(title=None)
+        fig.update_yaxes(
+            title=None,
+            tickfont=dict(
+                size=10,
+            ),
+        )
+        fig.update_xaxes(title=None)
         return fig
