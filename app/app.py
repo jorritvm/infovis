@@ -98,4 +98,4 @@ if __name__ == "__main__":
     SERVER_PORT = os.getenv("SERVER_PORT")
 
     # run the server - debug=True auto reloads browser when the dev makes changes
-    app.run_server(port=SERVER_PORT, debug=False)
+    app.run_server(host="0.0.0.0", port=SERVER_PORT, debug=False)
