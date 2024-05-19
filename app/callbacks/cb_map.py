@@ -68,9 +68,9 @@ def register_update_map(app, df):
 
         # Create a color mapping for the statuses (based on https://colorbrewer2.org/#type=diverging&scheme=BrBG&n=6)
         color_mapping = {
-            'operating': '#01665e',
-            'announced': '#d8b365',
-            'retired': '#666666',
+            'operating': '#1b9e77',
+            'future': '#7570b3',
+            'retired': '#d95f02',
         }
 
         fig = px.scatter_mapbox(data,

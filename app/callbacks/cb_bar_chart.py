@@ -37,14 +37,9 @@ def register_update_bar_chart(app, df):
         top_20 = top_20.sort_values("Capacity (MW)")
         # Create horizontal bar chart
         color_mapping = {
-            'construction': '#5ab4ac',
-            'operating': '#01665e',
-            'announced': '#d8b365',
-            'mothballed': 'lightgrey',
-            'cancelled': 'black',
-            'pre-construction': '#c7eae5',
-            'retired': '#666666',
-            'shelved': '#d95f02'
+            'operating': '#1b9e77',
+            'future': '#7570b3',
+            'retired': '#d95f02',
         }
         fig = px.bar(top_20,
                      x='Capacity (MW)',
