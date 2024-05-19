@@ -38,6 +38,6 @@ def register_reset_country(app, continents):
     )
     def reset_country(*button_clicks):
         """
-        Clears the currently selected 'country' value when a continent is clicked
+        Clears the currently selected 'country' value when a continent is clicked, or another subregion is clicked
         """
         return None

@@ -10,7 +10,7 @@ import dash
 from dash import dcc, html, Input, Output
 import dash_bootstrap_components as dbc
 
-from callbacks import cb_bar_chart, cb_continent, cb_country_filter, cb_map, cb_sub_region
+from callbacks import cb_bar_chart, cb_continent, cb_country_filter, cb_map, cb_sub_region, cb_status_type
 from components import filters
 from components.visualisations import main_map, bar_chart
 
@@ -91,7 +91,8 @@ cb_country_filter.register_update_country_filter(app, agg, continents)
 cb_country_filter.register_reset_country(app, continents)
 cb_map.register_update_map(app, df)
 cb_bar_chart.register_update_bar_chart(app, df)
-
+cb_status_type.register_update_type_filter(app, df)
+cb_status_type.register_update_status_filter(app, df)
 
 if __name__ == "__main__":
     load_dotenv()
