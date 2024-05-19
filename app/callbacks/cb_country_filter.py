@@ -33,7 +33,11 @@ def register_update_country_filter(app, agg, continents):
 def register_reset_country(app, continents):
     @app.callback(
         Output("country_filter", 'value'),
-        [Input(f"{continent}_click", 'n_clicks') for continent in continents]
+        [Input(f"{continent}_click", 'n_clicks') for continent in continents],
+        Input("sub_region_filter", "value"),
     )
     def reset_country(*button_clicks):
+        """
+        Clears the currently selected 'country' value when a continent is clicked
+        """
         return None

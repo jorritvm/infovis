@@ -33,5 +33,8 @@ def register_reset_subregion(app, continents):
         [Input(f"{continent}_click", 'n_clicks') for continent in continents]
     )
     def reset_subregion(*button_clicks):
+        """
+        Clears the currently selected 'sub region' value when a continent is clicked
+        """
         return None
 
