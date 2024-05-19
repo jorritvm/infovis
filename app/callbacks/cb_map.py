@@ -6,7 +6,9 @@ from utils.utils import filter_data
 
 def register_update_map(app, df):
     @app.callback(
-        Output('main_map', 'figure'),
+        [Output('main_map', 'figure'),
+         Output('bar_chart', 'clickData'),
+         ],
         [Input('last_clicked_continent', 'data'),
          Input('sub_region_filter', 'value'),
          Input('country_filter', 'value'),
@@ -52,6 +54,8 @@ def register_update_map(app, df):
 
         if zoom_info and 'mapbox.zoom' in zoom_info:
             zoom_level = zoom_info['mapbox.zoom']
+        elif clickdata is not None:
+            zoom_level = 8
         else:
             zoom_level = 1
 
@@ -82,7 +86,7 @@ def register_update_map(app, df):
                                             "Capacity (MW)": True, "Installation Type": True,
                                             "Latitude": False, "Longitude": False},
                                 category_orders={
-                                    'Status': ['operating', 'announced', 'retired']
+                                    'Status': ['operating', 'future', 'retired']
                                 },
                                 color="Status",
                                 color_discrete_map=color_mapping,
@@ -108,11 +112,10 @@ def register_update_map(app, df):
         ))
 
         # Center and zoom to clicked project on bar chart
-        # TODO: let this only run right after clicking on the bar chart
         if clickdata is not None:
             clicked_project = filtered_df[filtered_df['Project Name'] == clickdata['points'][0]['label']]
+            clicked_project = clicked_project.iloc[0]
             fig.update_layout(mapbox_center_lat=float(clicked_project['Latitude']),
-                              mapbox_center_lon=float(clicked_project['Longitude']),
-                              mapbox_zoom=7)
+                              mapbox_center_lon=float(clicked_project['Longitude']))
 
-        return fig
+        return fig, None
