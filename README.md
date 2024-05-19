@@ -14,7 +14,7 @@ Implements an interactive visualisation to explore global wind power.
 
     ```pip install -r requirements.txt```
     
-1. Copy `.env.template` to `.env` and configure the required secrets (e.g. port, password, ...)
+2. Copy `.env.template` to `.env` and configure the required secrets (e.g. port, ...)
 
 
 ## Running the notebook(s)
@@ -22,7 +22,7 @@ Implements an interactive visualisation to explore global wind power.
 1. Run the notebook from vs code using the ipython kernel.
 
 ## Running the dashboard
-1. Run the dash app in `app/app.py` from your IDEA of choice
+1. Run the dash app in `app/app.py` from your IDE of choice
 2. Explore the app using your web browser.
 
 ## Contribute

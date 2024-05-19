@@ -28,6 +28,7 @@ geo = pd.read_parquet("../data/clean/geo.parquet")
 ####################
 app = dash.Dash(
     __name__,
+    title="GWPT analysis",
     external_stylesheets=[dbc.themes.SLATE, dbc.icons.FONT_AWESOME, 'assets/css/styles.css'],
 )
 
@@ -97,4 +98,4 @@ if __name__ == "__main__":
     SERVER_PORT = os.getenv("SERVER_PORT")
 
     # run the server - debug=True auto reloads browser when the dev makes changes
-    app.run_server(port=SERVER_PORT, debug=True)
+    app.run_server(port=SERVER_PORT, debug=False)
