@@ -1,0 +1,53 @@
+infovis
+¦   .env
+¦   .env.template
+¦   README.md
+¦   requirements.txt
+¦           
++---app
+¦   ¦   app.py
+¦   ¦   
+¦   +---assets
+¦   ¦   +---css
+¦   ¦   ¦       styles.css
+¦   ¦           
+¦   +---callbacks
+¦   ¦   ¦   cb_bar_chart.py
+¦   ¦   ¦   cb_continent.py
+¦   ¦   ¦   cb_country_filter.py
+¦   ¦   ¦   cb_map.py
+¦   ¦   ¦   cb_status_type.py
+¦   ¦   ¦   cb_sub_region.py
+¦   ¦           
+¦   +---components
+¦   ¦   ¦   filters.py
+¦   ¦   ¦   visualisations.py
+¦   ¦           
+¦   +---utils
+¦       ¦   utils.py
+¦               
++---data
+¦   +---analysis
+¦   ¦       ...
+¦   ¦       
+¦   +---clean
+¦   ¦       ...
+¦   ¦       
+¦   +---etl
+¦   ¦       process_gwpt_data.ipynb
+¦   ¦       
+¦   +---raw
+¦           Global-Wind-Power-Tracker-December-2023.xlsx
+¦           
++---doc
+¦   +---assignment
+¦   +---dataset_selection
+¦   +---final_presentation
+¦   +---midterm_presentation
+¦   +---mockup
+¦   +---planning
+¦   +---report
+¦   +---video
+¦      
++---experimentation
+¦       ...

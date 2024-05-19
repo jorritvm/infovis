@@ -21,9 +21,15 @@ Implements an interactive visualisation to explore global wind power.
 1. Get the jupyter extension for vs code
 1. Run the notebook from vs code using the ipython kernel.
 
-## Running the dashboard
+## Running the dashboard from the IDE
 1. Run the dash app in `app/app.py` from your IDE of choice
 2. Explore the app using your web browser.
+
+## Running the dashboard from the CLI
+1. Activate the venv: `venv\Scripts\activate`
+2. Navigate to the app directory: `cd app`
+3. Run the dash app: `python app.py` 
+4. Explore the app using your web browser.
 
 ## Contribute
 1. Read the documentation in the `doc/` folder
