@@ -19,7 +19,8 @@ def generate_continent_cards(continents):
             id=f"{continent}_click",
             outline=False,
             color="secondary",
-            size="lg")
+            size="lg",
+            className="no-rounded")
         continents_dbc = continents_dbc + [continent_dbc]
     return continents_dbc
 

@@ -2,3 +2,7 @@
 .custom_white_text .rc-slider-handle {
     color: white !important;  /* Adjust the color value as needed */
 }
+
+.no-rounded {
+    border-radius: 0 !important;
+}
