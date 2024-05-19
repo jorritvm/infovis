@@ -64,7 +64,7 @@ app.layout = dbc.Container([
                 style={'height': '5vh'}),
             dbc.Row([
                 dbc.Col(  # map column
-                    dbc.Row(main_map, style={'height': '95vh'}),
+                    dbc.Row(main_map, style={'height': '85vh'}),
                     width=9),
                 dbc.Col(  # barchart column
                     dbc.Row(bar_chart, style={'height': '85vh'}),
