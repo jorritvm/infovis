@@ -26,7 +26,7 @@ def register_update_bar_chart(app, df):
             plotly figure to update the bar chart
         """
         # filter the whole dataset
-        print("filtering for bar chart")
+        # print("filtering for bar chart")
         dfx = filter_data(df, continent, sub_region, country, status, itype, time_range)
         # aggregate onto project level: combine project phases and statuses
         dfx_agg = dfx.groupby(["Region", "Subregion", "Country", "Installation Type", "Project Name", "Status"]).agg(
