@@ -51,7 +51,7 @@ def generate_status_filter(df):
     status_filter = dcc.Dropdown(
         id='status_filter',
         options=unique_status,
-        multi=True,
+        multi=False,
         placeholder="status",
     )
     return status_filter
@@ -64,7 +64,7 @@ def generate_type_filter(df):
     type_filter = dcc.Dropdown(
         id='type_filter',
         options=unique_type,
-        multi=True,
+        multi=False,
         placeholder="type",
     )
     return type_filter

@@ -11,8 +11,8 @@ def filter_data(df, continent, sub_region, country, status, itype, time_range):
         continent: string
         sub_region: string
         country: string
-        status: list of string
-        itype: list of string
+        status: string
+        itype: string
         time_range: tuple (int, int)
 
     Returns:
@@ -42,12 +42,12 @@ def filter_data(df, continent, sub_region, country, status, itype, time_range):
         filtered_df = filtered_df[filtered_df["Country"] == country]
 
     # Filter by status
-    if status is not None and status != []:
-        filtered_df = filtered_df[filtered_df["Status"].isin(status)]
+    if status is not None and status != "":
+        filtered_df = filtered_df[filtered_df["Status"] == status]
 
     # Filter by type
-    if itype is not None and itype != []:
-        filtered_df = filtered_df[filtered_df["Installation Type"].isin(itype)]
+    if itype is not None and itype != "":
+        filtered_df = filtered_df[filtered_df["Installation Type"] == itype]
 
     # Filter by time range
     if time_range is not None:
