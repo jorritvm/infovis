@@ -43,10 +43,16 @@ def register_update_map(app, df):
         # Find the index of the maximum capacity within each group
         max_capacity_idx = filtered_df.groupby(["Region", "Subregion", "Country", "Status", "Installation Type"])[
             'Capacity (MW)'].idxmax()
+
         # Extract the corresponding latitude and longitude
         max_capacity_coords = filtered_df.loc[
             max_capacity_idx, ["Region", "Subregion", "Country", "Status", "Installation Type", "Latitude",
                                "Longitude"]]
+
+        max_capacity_coords = max_capacity_coords.drop_duplicates(subset=[
+            "Region", "Subregion", "Country", "Status", "Installation Type"
+        ])
+
         # Merge the results back into the aggregated dataframe
         agg_country = agg_country.merge(max_capacity_coords,
                                         on=["Region", "Subregion", "Country", "Status", "Installation Type"],
