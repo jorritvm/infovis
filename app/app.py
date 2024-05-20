@@ -52,7 +52,7 @@ app.layout = dbc.Container([
     dbc.Row([
         dbc.Col(  # sidebar column
             [dbc.Row(x, style={'height': '15vh'}) for x in continents_dbc],
-            style={'height': '100vh'},
+            style={'height': '90vh'},
             width=2),
         dbc.Col([
             dbc.Row([  # filters row
