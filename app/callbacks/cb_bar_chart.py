@@ -49,7 +49,7 @@ def register_update_bar_chart(app, df):
                      color_discrete_map=color_mapping,
                      hover_data=['Region', 'Subregion', 'Country',
                                  'Project Name', 'Capacity (MW)'],
-                     title="Top 20 Largest Wind Farms"
+                     title="Top 20 Largest Wind Farms <br> Capacity (MW)"
                      )
         fig.update_layout(
             showlegend=False,
@@ -71,17 +71,6 @@ def register_update_bar_chart(app, df):
                 t=100,  # top margin
                 ),
                 title_x=0.5,  # title position
-                annotations=[
-                    dict(
-                        x=-2,  # x position
-                        y=-0.15,  # y position
-                        showarrow=False,
-                        text="Capacity (MW)",  # annotation text
-                        xref="paper",
-                        yref="paper",
-                        font=dict(size=14)
-                    )
-                ]
         )
         fig.update_yaxes(
             title=None,
